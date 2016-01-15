@@ -6,6 +6,6 @@ use syntax::ast;
 pub struct Test {
     pub description: String,
     pub block: P<ast::Block>,
-    pub failing: bool
+    pub failing: bool,
+    pub ignored: bool
 }
-

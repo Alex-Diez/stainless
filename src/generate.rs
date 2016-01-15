@@ -20,13 +20,14 @@ pub trait Generate<Cfg> {
 
 impl<'a> Generate<&'a DescribeState> for Test {
     fn generate(self, sp: codemap::Span, cx: &mut base::ExtCtxt, state: &'a DescribeState) -> P<ast::Item> {
-        let Test { description, block, failing } = self;
+        let Test { description, block, failing, ignored } = self;
 
         // Create the #[test] attribute.
         let test_attribute = cx.attribute(sp, cx.meta_word(sp, token::InternedString::new("test")));
 
         // Create the #[should_panic] attribute.
         let should_panic = cx.attribute(sp, cx.meta_word(sp, token::InternedString::new("should_panic")));
+        let ignore = cx.attribute(sp, cx.meta_word(sp, token::InternedString::new("ignore")));
 
         let non_snake_word = cx.meta_word(sp, token::InternedString::new("non_snake_case"));
         let allow_non_snake_case = cx.meta_list(sp, token::InternedString::new("allow"),
@@ -64,9 +65,13 @@ impl<'a> Generate<&'a DescribeState> for Test {
         // #[test] - no way without it
         // #[allow(non_snake_case_attr)] as description may contain upper case
         // #[should_panic] if specified
+        // #[ignore] if specified
         let mut attrs = vec![test_attribute, allow_non_snake_case];
         if failing {
             attrs.push(should_panic);
+        }
+        if ignored {
+            attrs.push(ignore);
         }
 
         // Create the final Item that represents the test.

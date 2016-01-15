@@ -15,8 +15,8 @@ pub trait Parse<Cfg> {
     fn parse(&mut Parser, Cfg) -> Self;
 }
 
-impl Parse<bool> for Test {
-    fn parse(parser: &mut Parser, failing: bool) -> Test {
+impl Parse<(bool, bool)> for Test {
+    fn parse(parser: &mut Parser, properties: (bool, bool)) -> Test {
         // Description of this test.
         let (description, _) = parser.parse_str().ok().unwrap();
 
@@ -27,7 +27,8 @@ impl Parse<bool> for Test {
             // The associated block
             block: parser.parse_block().ok().unwrap(),
 
-            failing: failing
+            failing: properties.0,
+            ignored: properties.1
         }
     }
 }
@@ -37,7 +38,7 @@ impl Parse<()> for Bench {
         // Description of this benchmark
         let (description, _) = parser.parse_str().ok().unwrap();
 
-        let name = match (parser.bump_and_get(), parser.parse_ident().ok().unwrap(), parser.bump_and_get()) {
+        let name = match (parser.bump_and_get(), parser.parse_ident().unwrap(), parser.bump_and_get()) {
             (token::OpenDelim(token::Paren), ident, token::CloseDelim(token::Paren)) => { ident },
 
             (one, two, three) => {
@@ -60,6 +61,7 @@ const THEN:        &'static str = "then";
 const BEFORE:      &'static str = "before";
 const AFTER:       &'static str = "after";
 const IT:          &'static str = "it";
+const IGNORE:      &'static str = "ignore";
 const WHEN:        &'static str = "when";
 const DESCRIBE:    &'static str = "describe";
 const FAILING:     &'static str = "failing";
@@ -131,10 +133,13 @@ impl<'a, 'b> Parse<(codemap::Span, &'a mut base::ExtCtxt<'b>, Option<ast::Ident>
                 },
 
                 // Regular `#[test]`.
-                IT | WHEN => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, false))) },
+                IT | WHEN => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, (false, false)))) },
 
                 // `#[should_panic]` test.
-                FAILING => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, true))) },
+                FAILING => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, (true, false)))) },
+
+                //`#[ignore]` test
+                IGNORE => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, (true, true)))) },
 
                 // #[bench] benchmark.
                 BENCH => { state.subblocks.push(SubBlock::Bench(Parse::parse(parser, ()))) }
@@ -172,8 +177,8 @@ fn illegal(parser: &mut Parser, banned: &str) {
     // Illegal block name.
     let span = parser.span;
     panic!("{:?}", parser.span_fatal(span, &format!("Expected one of: `{}`, but found: `{}`",
-        format!("{}, {}, {}, {}, {}, {}, {}, {}",
+        format!("{}, {}, {}, {}, {}, {}, {}, {}, {}",
                 BEFORE_EACH, AFTER_EACH, BEFORE, AFTER,
-                IT, BENCH, FAILING, DESCRIBE),
+                IT, BENCH, FAILING, DESCRIBE, IGNORE),
         banned)));
 }
