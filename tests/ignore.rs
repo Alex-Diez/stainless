@@ -3,7 +3,7 @@
 
 describe! ignored_tests {
 
-    ignore "should be ingored" {
+    ignore "should be ignored" {
         assert!(false);
     }
 }

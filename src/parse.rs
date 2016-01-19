@@ -5,7 +5,7 @@ use syntax::parse::token;
 use syntax::ptr::P;
 use syntax::parse::parser::Parser;
 
-use test::Test;
+use test::{Test, TestConfig};
 use bench::Bench;
 use describe::{DescribeState, SubBlock};
 
@@ -15,8 +15,8 @@ pub trait Parse<Cfg> {
     fn parse(&mut Parser, Cfg) -> Self;
 }
 
-impl Parse<(bool, bool)> for Test {
-    fn parse(parser: &mut Parser, properties: (bool, bool)) -> Test {
+impl Parse<TestConfig> for Test {
+    fn parse(parser: &mut Parser, test_config: TestConfig) -> Test {
         // Description of this test.
         let (description, _) = parser.parse_str().ok().unwrap();
 
@@ -27,8 +27,8 @@ impl Parse<(bool, bool)> for Test {
             // The associated block
             block: parser.parse_block().ok().unwrap(),
 
-            failing: properties.0,
-            ignored: properties.1
+            failing: test_config.failing,
+            ignored: test_config.ignored
         }
     }
 }
@@ -133,13 +133,13 @@ impl<'a, 'b> Parse<(codemap::Span, &'a mut base::ExtCtxt<'b>, Option<ast::Ident>
                 },
 
                 // Regular `#[test]`.
-                IT | WHEN => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, (false, false)))) },
+                IT | WHEN => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, TestConfig::test()))) },
 
                 // `#[should_panic]` test.
-                FAILING => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, (true, false)))) },
+                FAILING => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, TestConfig::failing_test()))) },
 
                 //`#[ignore]` test
-                IGNORE => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, (true, true)))) },
+                IGNORE => { state.subblocks.push(SubBlock::Test(Parse::parse(parser, TestConfig::ignored_test()))) },
 
                 // #[bench] benchmark.
                 BENCH => { state.subblocks.push(SubBlock::Bench(Parse::parse(parser, ()))) }

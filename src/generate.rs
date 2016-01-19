@@ -27,6 +27,7 @@ impl<'a> Generate<&'a DescribeState> for Test {
 
         // Create the #[should_panic] attribute.
         let should_panic = cx.attribute(sp, cx.meta_word(sp, token::InternedString::new("should_panic")));
+        // Create the #[ignore] attribute.
         let ignore = cx.attribute(sp, cx.meta_word(sp, token::InternedString::new("ignore")));
 
         let non_snake_word = cx.meta_word(sp, token::InternedString::new("non_snake_case"));
