@@ -20,7 +20,7 @@ pub trait Generate<Cfg> {
 
 impl<'a> Generate<&'a DescribeState> for Test {
     fn generate(self, sp: codemap::Span, cx: &mut base::ExtCtxt, state: &'a DescribeState) -> P<ast::Item> {
-        let Test { description, block, failing, ignored } = self;
+        let Test { description, block, test_config } = self;
 
         // Create the #[test] attribute.
         let test_attribute = cx.attribute(sp, cx.meta_word(sp, token::InternedString::new("test")));
@@ -68,10 +68,10 @@ impl<'a> Generate<&'a DescribeState> for Test {
         // #[should_panic] if specified
         // #[ignore] if specified
         let mut attrs = vec![test_attribute, allow_non_snake_case];
-        if failing {
+        if test_config.failing {
             attrs.push(should_panic);
         }
-        if ignored {
+        if test_config.ignored {
             attrs.push(ignore);
         }
 

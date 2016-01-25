@@ -27,8 +27,7 @@ impl Parse<TestConfig> for Test {
             // The associated block
             block: parser.parse_block().ok().unwrap(),
 
-            failing: test_config.failing,
-            ignored: test_config.ignored
+            test_config: test_config
         }
     }
 }

@@ -6,10 +6,10 @@ use syntax::ast;
 pub struct Test {
     pub description: String,
     pub block: P<ast::Block>,
-    pub failing: bool,
-    pub ignored: bool
+    pub test_config: TestConfig
 }
 
+#[derive(Clone)]
 pub struct TestConfig {
     pub ignored: bool,
     pub failing: bool
